@@ -96,6 +96,12 @@ def generate_launch_description():
         output='screen'
     )
 
+    load_joint_effort_controller = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+             'joint_effort_controller'],
+        output='screen'
+    )
+
     # load_tricycle_controller = ExecuteProcess(
     #     cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
     #          'tricycle_controller'],
@@ -106,7 +112,7 @@ def generate_launch_description():
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=spawn_entity,
-                on_exit=[load_joint_state_broadcaster],
+                on_exit=[load_joint_state_broadcaster, load_joint_effort_controller],
             )
         ),
         
