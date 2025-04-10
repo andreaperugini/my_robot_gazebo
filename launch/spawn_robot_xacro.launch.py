@@ -6,17 +6,23 @@ from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
 import os
+import re
 
 from ament_index_python.packages import get_package_share_directory
 
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
+from launch.actions import ExecuteProcess, IncludeLaunchDescription, DeclareLaunchArgument, RegisterEventHandler
 from launch.substitutions import LaunchConfiguration
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 import os
 from ament_index_python.packages import get_package_share_directory, get_package_prefix
+import xacro
+from launch.event_handlers import OnProcessExit
 
+def remove_comments(text):
+    pattern = r'<!--(.*?)-->'
+    return re.sub(pattern, '', text, flags=re.DOTALL)
 
 
 def generate_launch_description():
@@ -61,13 +67,18 @@ def generate_launch_description():
         value_type=str
     )
 
-    robot_description_param = {'robot_description': robot_description_content}
+    #robot_description_param = {'robot_description': robot_description_content}
+
+    doc = xacro.parse(open(xacro_file))
+    xacro.process_doc(doc)
+    robot_description_param = {'robot_description': doc.toxml()}
+    robot_description_param2= remove_comments(robot_description_param)
 
     robot_state_publisher_node = Node(
             package='robot_state_publisher',
             executable='robot_state_publisher',
             output='screen',
-            parameters=[robot_description_param]
+            parameters=[robot_description_param2]
         )
     
     spawn_entity_mio = Node(
@@ -78,27 +89,76 @@ def generate_launch_description():
 
     )
 
+    gazebo_ros2_control_demos_path = os.path.join(
+        get_package_share_directory('gazebo_ros2_control_demos'))
+
+    rviz = Node(
+    package='rviz2',
+    executable='rviz2',
+    arguments=[
+            '-d',
+            os.path.join(gazebo_ros2_control_demos_path, 'config/config.rviz'),
+    ],
+    output='screen',
+    )
+
     spawn_entity = Node(
         package='gazebo_ros',
         executable='spawn_entity.py',
         output="screen",
-        arguments=['-entity', 'my_robot','-topic','/robot_description','-x','0','-y','0','-z','1']
-
+        arguments=['-entity', 'my_robot','-topic','robot_description',
+                   '-x','0',
+                   '-y','0',
+                   '-z','0.5']
     )
 
+    load_joint_state_broadcaster = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+             'joint_state_broadcaster'],
+        output='screen'
+    )
+
+    gazebo = IncludeLaunchDescription(
+                PythonLaunchDescriptionSource([os.path.join(
+                    get_package_share_directory('gazebo_ros'), 'launch'), '/gazebo.launch.py']),
+             )
+
+
+    
+    load_tricycle_controller = ExecuteProcess(
+        cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
+             'tricycle_controller'],
+        output='screen'
+    )
 
     
        
     return LaunchDescription([
+        
+        #avvia load_join_state_broadcaster dopo che spawn_entity ha finito
+        RegisterEventHandler(
+            event_handler=OnProcessExit(
+                target_action=spawn_entity,
+                on_exit=[load_joint_state_broadcaster],
+            )
+        ),
 
+        # RegisterEventHandler(
+        #     event_handler=OnProcessExit(
+        #         target_action=load_joint_state_broadcaster,
+        #         on_exit=[load_tricycle_controller],
+        #     )
+        # ),
+                
 
           # Avvia Gazebo
-        IncludeLaunchDescription(PythonLaunchDescriptionSource(gazebo_launch)),
+        #IncludeLaunchDescription(PythonLaunchDescriptionSource(gazebo_launch)),
 
 
-        stl_mesh_arg,
-        transmission_hw_interface_arg,
+        #stl_mesh_arg,
+        #transmission_hw_interface_arg,
 
+        gazebo,
         robot_state_publisher_node,
         spawn_entity
         

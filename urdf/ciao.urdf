@@ -5,17 +5,29 @@
 <!-- =================================================================================== -->
 <robot name="tm5_900">
   <gazebo>
-    <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so"> 
-      <parameters>$(find my_robot_gazebo)/config/joint_controller.yaml</parameters>
-     </plugin>  
-    
-
-    
+    <plugin filename="libgazebo_ros2_control.so" name="gazebo_ros2_control">
+      <parameters>/home/andrea/Scrivania/ros2_ws/install/my_robot_gazebo/share/my_robot_gazebo/config/prova.yaml</parameters>
+      <robot_param>robot_description</robot_param>
+      <robot_param_node>robot_state_publisher</robot_param_node>
+    </plugin>
   </gazebo>
+  <ros2_control name="GazeboSystem" type="system">
+    <hardware>
+      <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+    </hardware>
+    <joint name="shoulder_1_joint">
+      <command_interface name="position"/>
+      <state_interface name="position"/>
+    </joint>
+    <joint name="shoulder_2_joint">
+      <command_interface name="velocity"/>
+      <state_interface name="velocity"/>
+      <state_interface name="position"/>
+    </joint>
+  </ros2_control>
   <!--xacro:include filename="$(find my_robot_gazebo)/urdf/tm.gazebo.xacro" /-->
   <!-- Kinematic model -->
   <!-- Properties from tmcontrol.conf -->
-  
   <!-- 0.1297 -->
   <!--xacro:property name="ee_length" value="${tm_d6 - wrist_3_length}" /-->
   <transmission name="shoulder_1_trans">
@@ -90,16 +102,15 @@
   <gazebo reference="wrist_3_link">
     <selfCollide>true</selfCollide>
   </gazebo>
-  
+  <!--
+    <gazebo reference="${prefix}ee_link">
+      <selfCollide>true</selfCollide>
+    </gazebo>
+    -->
   <link name="base_link">
     <visual>
       <geometry>
-      
         <mesh filename="package://my_robot_gazebo/meshes/tm5_900/visual/tm5_base.obj"/>
-        
-        <!--
-         <mesh filename="/home/andrea/Scrivania/ros2_ws/src/my_robot_gazebo/meshes/tm5_900/visual/tm5_base.obj"/>
-        -->
       </geometry>
       <material name="LightGrey">
         <color rgba="0.5 0.5 0.5 1.0"/>
@@ -312,24 +323,4 @@
     <child link="base"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
   </joint>
-
-
-  <ros2_control name="GazeboSystem" type = "system">
-    <hardware>
-      <plugin>gabebo_ros2_control/GazeboSystem</plugin>
-    </hardware>
-    <joint name="wrist_2_joint">
-      <command_interface name="position"> 
-      </command_interface>
-      <state_interface name="velocity"/>
-      <state_interface name="effort"/>
-    </joint>
-
-    <joint name="wrist_1_joint">
-      <command_interface name="position"> 
-      </command_interface>
-      <state_interface name="velocity"/>
-      <state_interface name="effort"/>
-    </joint>
-  </ros2_control>
 </robot>
