@@ -5,4 +5,6 @@ lancia tutti i nodi per avviare la simulazione, tra cui i nodi di lettura dei jo
 2. in un altra shell
     ros2 topic pub /joint_effort_controller/commands std_msgs/Float64MultiArray "{data: [-10.0]}"
 
+
+
 pubblica sul topic un valore di effort da trasmettere al giunto dedicato (in questo caso shoulder_1)
