@@ -26,3 +26,12 @@ pubblica sul topic un valore di effort da trasmettere al giunto dedicato (in que
     time_from_start: {sec: 3, nanosec: 0}
   }]
 }"
+
+
+
+Altro modo:
+1. Fare l'attivita 1 di prima
+2. in un altra shell
+    ros2 run my_robot_gazebo controller_joint
+    lancia il nodo controller_joint.py che pubblica degli angoli casuali ogni 5 secondi
+

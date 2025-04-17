@@ -52,6 +52,7 @@ setup(
     entry_points={
         'console_scripts': [
             'spawn_entity = my_robot_gazebo.spawn_entity:main',
+            'controller_joint = my_robot_gazebo.controller_joint:main'
         ],
     },
 
