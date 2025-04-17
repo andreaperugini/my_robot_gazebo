@@ -28,7 +28,7 @@
     </hardware>
 
     <joint name="shoulder_1_joint">
-      <command_interface name="effort" />
+      <command_interface name="position" />
       <state_interface name="position" />
       <state_interface name="velocity" />
       <state_interface name="effort" />

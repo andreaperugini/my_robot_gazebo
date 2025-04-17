@@ -2,9 +2,27 @@
 1. ros2 launch my_robot_gazebo lettura_joints.launch.py   
 lancia tutti i nodi per avviare la simulazione, tra cui i nodi di lettura dei joint(solo 2 attualmente) e di effort(solo 1 anche quello ora)
 
-2. in un altra shell
+2. in un altra shell (non funziona piu in questa versione)
     ros2 topic pub /joint_effort_controller/commands std_msgs/Float64MultiArray "{data: [-10.0]}"
 
 
 
 pubblica sul topic un valore di effort da trasmettere al giunto dedicato (in questo caso shoulder_1)
+
+
+
+3 in un altra shell 
+    ros2 topic pub /joint_trajectory_controller/joint_trajectory trajectory_msgs/msg/JointTrajectory "{
+  joint_names: [
+    'shoulder_1_joint',
+    'shoulder_2_joint',
+    'elbow_joint',
+    'wrist_1_joint',
+    'wrist_2_joint',
+    'wrist_3_joint'
+  ],
+  points: [{
+    positions: [1.0, -1.0, 1.0, 0.5, 2.0, 1.0],
+    time_from_start: {sec: 3, nanosec: 0}
+  }]
+}"
