@@ -22,7 +22,7 @@ pubblica sul topic un valore di effort da trasmettere al giunto dedicato (in que
     'wrist_3_joint'
   ],
   points: [{
-    positions: [1.0, -1.0, 1.0, 0.5, 2.0, 1.0],
+    positions: [1.0, 4.0, 8.0, 12.0, 16.0, 20.0],
     time_from_start: {sec: 3, nanosec: 0}
   }]
 }"
@@ -34,4 +34,7 @@ Altro modo:
 2. in un altra shell
     ros2 run my_robot_gazebo controller_joint
     lancia il nodo controller_joint.py che pubblica degli angoli casuali ogni 5 secondi
+
+
+primo- parte gazebo + ee_publisher + target_publisher + rl_to_trajectory
 

@@ -24,6 +24,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 from ament_index_python.packages import get_package_share_directory, get_package_prefix
 from launch.substitutions import Command, PathJoinSubstitution
 from launch_ros.actions import Node
+#from ee_pos import EEListener
 from launch_ros.substitutions import FindPackageShare
 import xacro
 from launch.substitutions import LaunchConfiguration
@@ -86,8 +87,14 @@ def generate_launch_description():
         arguments=['-entity', 'my_robot','-topic','robot_description',
                    '-x','0',
                    '-y','0',
-                   '-z','3.5']
+                   '-z','0']
     )
+
+    #ee_pos = Node(
+    #    package = 'my_robot_gazebo',
+    #    executable = 'EEListener',
+    #    output = "screen"
+    #)
 
     
     load_joint_state_broadcaster = ExecuteProcess(
@@ -114,6 +121,24 @@ def generate_launch_description():
         output='screen'
     )
 
+    publish_ee = Node(
+        package='my_robot_gazebo',
+        executable='ee_publisher',
+    )
+
+    target = Node(
+        package='my_robot_gazebo',
+        executable='target_publisher',
+    )
+    rl_to_trajectory = Node(
+        package='my_robot_gazebo',
+        executable='rl_to_trajectory',
+    )
+    target_visual = Node (
+        package = 'my_robot_gazebo',
+        executable= 'target_visual'
+    )
+
     # load_tricycle_controller = ExecuteProcess(
     #     cmd=['ros2', 'control', 'load_controller', '--set-state', 'active',
     #          'tricycle_controller'],
@@ -124,7 +149,7 @@ def generate_launch_description():
         RegisterEventHandler(
             event_handler=OnProcessExit(
                 target_action=spawn_entity,
-                on_exit=[load_joint_state_broadcaster, load_joint_effort_controller, load_joint_position_controller, load_traj],
+                on_exit=[load_joint_state_broadcaster,load_traj, target_visual],
             )
         ),
         
@@ -136,7 +161,8 @@ def generate_launch_description():
         #     )
         # ),
         gazebo,
-        node_robot_state_publisher,
+        node_robot_state_publisher, 
+        target, rl_to_trajectory, publish_ee,
         spawn_entity
         
     ])

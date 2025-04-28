@@ -37,7 +37,7 @@ class RobotSpawner(Node):
         initial_pose = Pose()
         initial_pose.position.x = 0.0
         initial_pose.position.y = 0.0
-        initial_pose.position.z = 0.5
+        initial_pose.position.z = 0.0
 
         # Richiesta per spawnare il robot
         request = SpawnEntity.Request()

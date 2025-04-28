@@ -52,7 +52,12 @@ setup(
     entry_points={
         'console_scripts': [
             'spawn_entity = my_robot_gazebo.spawn_entity:main',
-            'controller_joint = my_robot_gazebo.controller_joint:main'
+            'controller_joint = my_robot_gazebo.controller_joint:main',
+            #'end_effector_node = my_robot_gazebo.ee_pos:main'
+            'ee_publisher = my_robot_gazebo.ee_publisher:main',
+            'target_publisher = my_robot_gazebo.target_publisher:main',
+            'rl_to_trajectory= my_robot_gazebo.rl_to_trajectory:main' ,
+            'target_visual = my_robot_gazebo.target_visual:main'
         ],
     },
 
