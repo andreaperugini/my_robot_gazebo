@@ -28,18 +28,40 @@ from launch_ros.actions import Node
 from launch import LaunchDescription
 from launch.substitutions import Command
 from launch.actions import ExecuteProcess
-from ament_index_python.packages import get_package_share_directory
+from ament_index_python.packages import get_package_share_directory, get_package_prefix
+from launch_ros.parameter_descriptions import ParameterValue
+import subprocess
 
+import re
+
+def remove_xml_comments(xml_str: str) -> str:
+    """Rimuove tutti i commenti <!-- ... --> da una stringa XML."""
+    return re.sub(r'<!--.*?-->', '', xml_str, flags=re.DOTALL)
 
 def generate_launch_description():
 
+	  #NECESSARIO ALTRIMENTI NON CARICA LE MESHES
+	pkg_share_path = os.path.join(get_package_prefix('my_doosan_pkg'), 'share')
+	if 'GAZEBO_MODEL_PATH' in os.environ:
+		os.environ['GAZEBO_MODEL_PATH'] += os.pathsep + pkg_share_path
+	else:
+		os.environ['GAZEBO_MODEL_PATH'] = pkg_share_path
 
 	#robot model to option m1013 or a0912 
 	
-	robot_model = 'a0912'
+	robot_model = 'tm5_900'
 	#robot_model = 'm1013'
 
-	xacro_file = get_package_share_directory('my_doosan_pkg') + '/description'+'/xacro/'+ robot_model +'.urdf.xacro'
+	xacro_file = os.path.join(
+    get_package_share_directory('my_doosan_pkg'),
+    'description',
+    'xacro',
+    robot_model + '.urdf.xacro'
+)	
+	
+	#l'urdf generato ha dei commenti, che non permettono a ros2control di fare un parsing corretti (quindi non fanno i controllori). è necessario levare i commenti
+	urdf_raw = subprocess.check_output(['xacro', xacro_file]).decode()
+	urdf_uncommented = remove_xml_comments(urdf_raw)
 
 	
 	# Robot State Publisher 
@@ -47,8 +69,13 @@ def generate_launch_description():
 								 executable ='robot_state_publisher',
 								 name       ='robot_state_publisher',
 								 output     ='both',
-								 parameters =[{'robot_description': Command(['xacro', ' ', xacro_file])           
-								}])
+								 parameters =[{
+									'robot_description': ParameterValue(
+										urdf_uncommented,
+										value_type=str
+									)
+								}] )
+	
 
 
 	# Spawn the robot in Gazebo
@@ -86,7 +113,5 @@ def generate_launch_description():
 										cmd=['ros2', 'control', 'load_controller', '--set-state', 'active', 'joint_trajectory_controller'], 
 										output='screen')
 
-	#attualmente non carica i controller, non so perche. forse bisogna caricarli dopo lo spawn entity
-	
 
 	return LaunchDescription([robot_state_publisher, spawn_entity_robot, load_joint_state_broadcaster, load_joint_trajectory_controller  ])

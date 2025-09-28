@@ -35,9 +35,10 @@ def generate_launch_description():
 	my_doosan_robot_files = get_package_share_directory('my_doosan_pkg')
 	my_environmets_files  = get_package_share_directory('my_environment_pkg')
 
+
 	# Start doosan robot and controller
 	doosan_robot = IncludeLaunchDescription(PythonLaunchDescriptionSource(my_doosan_robot_files + '/launch/my_doosan_controller.launch.py')) 
-	
+
 	# Start sphere mark
 	sphere_mark  = IncludeLaunchDescription(PythonLaunchDescriptionSource(my_sphere_files + '/launch/my_sphere.launch.py')) 
 
@@ -68,7 +69,6 @@ def generate_launch_description():
 
 
 	ld = LaunchDescription()
-
 	ld.add_action (doosan_robot)
 	ld.add_action (sphere_mark)
 	ld.add_action (gazebo_node)

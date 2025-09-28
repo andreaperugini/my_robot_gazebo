@@ -65,7 +65,7 @@ from rclpy.duration import Duration
 
 class MyRLEnvironmentNode(Node):
 
-	def __init__ (self, save_path): # da togliere save_path
+	def __init__ (self): # da togliere save_path
 		
 
 		super().__init__('node_main_rl_environment')
@@ -153,7 +153,7 @@ class MyRLEnvironmentNode(Node):
 
 	def initial_callback(self, joint_state_msg, target_point_msg):
 
-		# Seems that the order that the joint values arrive is: ['joint2', 'joint3', 'joint1', 'joint4', 'joint5', 'joint6']
+		# Seems that the order that the joint values arrive is: ['joint2', 'joint3', 'joint1', 'joint4', 'joint5', 'joint6'] #TODO DA CAMBIARE NEL NOSTRO ROBOT, L'ORDINE NON SO QUALE SIA
 		#print("callback chiamata")
 		# Position of each joint:
 		self.joint_1_pos = joint_state_msg.position[2]
@@ -170,6 +170,9 @@ class MyRLEnvironmentNode(Node):
 		self.joint_4_vel =  joint_state_msg.velocity[3]
 		self.joint_5_vel =  joint_state_msg.velocity[4]
 		self.joint_6_vel =  joint_state_msg.velocity[5]
+		
+	
+		self.joint_vel = 5*(abs(self.joint_1_vel/3.14) + abs(self.joint_2_vel/0.57)  + abs(self.joint_3_vel/2.51)  + abs(self.joint_4_vel/3.14)  + abs(self.joint_5_vel/3.14)  + abs(self.joint_6_vel/3.14))
 
 		# Determine the sphere position in Gazebo wrt world frame
 		sphere_index = target_point_msg.name.index('my_sphere') # Get the corret index for the sphere
@@ -190,7 +193,7 @@ class MyRLEnvironmentNode(Node):
 		try:
 			now = rclpy.time.Time()	
 			self.reference_frame = 'world'
-			self.child_frame     = 'link6'
+			self.child_frame     = 'wrist_3_link'
 			trans = self.tf_buffer.lookup_transform(self.reference_frame, self.child_frame, now) # This calculate the position of the link6 w.r.t. world frame
 			
 		except TransformException as ex:
@@ -253,9 +256,9 @@ class MyRLEnvironmentNode(Node):
 		home_point_msg.positions     = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 		home_point_msg.velocities    = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 		home_point_msg.accelerations = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-		home_point_msg.time_from_start = Duration(seconds=2).to_msg()
+		home_point_msg.time_from_start = Duration(seconds=1).to_msg() #prima era 2, provo ad accorciare i tempi
 
-		joint_names   = ['joint1', 'joint2', 'joint3', 'joint4', 'joint5', 'joint6']
+		joint_names   = ['shoulder_1_joint', 'shoulder_2_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 		home_goal_msg = FollowJointTrajectory.Goal()
 		home_goal_msg.goal_time_tolerance    = Duration(seconds=1).to_msg()
 		home_goal_msg.trajectory.joint_names = joint_names
@@ -287,6 +290,8 @@ class MyRLEnvironmentNode(Node):
 		# Every time this function is called, it passes the action vector (desire position of each joint) 
 		# to the action-client to execute the trajectory
 		print(action_values)
+		action_values = action_values.tolist() #prima è numpy.array, cosi diventa vettore di float
+		print(type(action_values))
 		points = []
 
 		point_msg = JointTrajectoryPoint()
@@ -296,7 +301,9 @@ class MyRLEnvironmentNode(Node):
 		point_msg.time_from_start = Duration(seconds=2.0).to_msg() # be careful about this time 
 		points.append(point_msg) 
 
-		joint_names = ['joint1','joint2','joint3','joint4','joint5','joint6']
+		#joint_names = ['joint1','joint2','joint3','joint4','joint5','joint6']
+		joint_names   = ['shoulder_1_joint', 'shoulder_2_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
+
 		goal_msg    = FollowJointTrajectory.Goal()
 		goal_msg.goal_time_tolerance = Duration(seconds=1).to_msg() # goal_time_tolerance allows some freedom in time, so that the trajectory goal can still
 															        # succeed even if the joints reach the goal some time after the precise end time of the trajectory.
@@ -330,7 +337,7 @@ class MyRLEnvironmentNode(Node):
 			self.get_logger().info('There was a problem with the accion')
 
 	
-	def generate_action_funct(self):
+	def addssgenerate_action_funct(self):
 
 		# This is a continuous action space
 		# This function generates random values in radians for each joint
@@ -346,7 +353,75 @@ class MyRLEnvironmentNode(Node):
 		return [angle_j_1, angle_j_2, angle_j_3, angle_j_4, angle_j_5, angle_j_6]
 
 
+	
 	def calculate_reward_funct(self):
+		try:
+			ee_pos = np.array((self.robot_x, self.robot_y, self.robot_z), dtype=np.float32)
+			target_pos = np.array((self.pos_sphere_x, self.pos_sphere_y, self.pos_sphere_z), dtype=np.float32)
+		except Exception as e:
+			self.get_logger().info(f'[EXCEPTION] Could not calculate reward: {str(e)}')
+			return -1.0, False
+
+		# --- Distanza e velocità ---
+		distance = np.linalg.norm(ee_pos - target_pos)  # [m]
+		vel = abs(self.joint_vel)  # somma pesata delle velocità già definita da te
+
+		# Normalizzazione velocità (ipotizzando vel massima ~ 100)
+		vel_norm = np.clip(vel / 100.0, 0.0, 1.0)
+
+		# --- Componente di avvicinamento ---
+		# Alto se vicino, ma anche se sta riducendo la distanza rapidamente
+		reward_distance = 5.0 / (1.0 + 10 * distance)
+
+		# --- Incentivo movimento quando lontano ---
+		if distance > 0.05:
+			reward_speed = 1.0 * (1.0 - vel_norm) * (-1) + vel_norm * 2.0  
+			# lento = penalità, veloce = bonus
+		else:
+			reward_speed = 1.0 - vel_norm  
+			# vicino al target → premia velocità bassa
+
+		# --- Reward totale ---
+		shaped_reward = 0.85 * reward_distance + 0.15 * reward_speed
+
+		# Bonus finale
+		done = False
+		if distance <= 0.05:
+			self.get_logger().info('Goal Reached')
+			shaped_reward += 5.0
+			done = True
+
+		return float(shaped_reward), done
+
+	def calculate_reward_funct3(self):
+		try:
+			ee_pos = np.array((self.robot_x, self.robot_y, self.robot_z), dtype=np.float32)
+			target_pos = np.array((self.pos_sphere_x, self.pos_sphere_y, self.pos_sphere_z), dtype=np.float32)
+		except Exception as e:
+			self.get_logger().info(f'[EXCEPTION] Could not calculate reward: {str(e)}')
+			return -1.0, False
+
+		# Calcolo distanza euclidea end-effector → target
+		distance = np.linalg.norm(ee_pos - target_pos)
+		velocita_joint = self.joint_vel
+		# Reward denso: inversamente proporzionale alla distanza
+		# Più il braccio è vicino, più reward cresce (max circa 1.0 vicino al target)
+		shaped_reward1 = 5.0 / (1.0 + 10*(distance))
+		shaped_reward2 = 5.0 / (1.0 + 10*(velocita_joint))
+		shaped_reward = shaped_reward1 + shaped_reward2
+
+		# Penalità leggera per incoraggiare movimenti rapidi (in che senso scusa)
+		shaped_reward -= 0.01  
+
+		done = False
+		if distance <= 0.05:
+			self.get_logger().info('Goal Reached')
+			shaped_reward += 5.0  # bonus finale
+			done = True
+
+		return float(shaped_reward), done
+
+	def calculate_reward_funct2(self):
 		try:
 			ee_pos = np.array((self.robot_x, self.robot_y, self.robot_z))
 			target_pos = np.array((self.pos_sphere_x, self.pos_sphere_y, self.pos_sphere_z))
@@ -358,8 +433,10 @@ class MyRLEnvironmentNode(Node):
 		distance = np.linalg.norm(ee_pos - target_pos)
 
 		# Penalità proporzionale (più semplice da scalare)
-		shaped_reward = 1.0 - distance  # reward vicino a 1 se è vicino
-		shaped_reward *= 5.0  # amplifica un po’
+		#shaped_reward = 1.0 - distance  # reward vicino a 1 se è vicino
+		#shaped_reward *= 5.0  # amplifica un po’
+
+		shaped_reward = -5
 
 		done = False
 		if distance <= 0.05:
@@ -369,14 +446,42 @@ class MyRLEnvironmentNode(Node):
 
 		return shaped_reward, done
 
+
 	def state_space_funct(self):
 		try:
-			state = [
+			# Osservazione: posizione del robot e stati dei giunti
+			observation = np.array([
 				self.robot_x, self.robot_y, self.robot_z,
 				self.joint_1_pos, self.joint_2_pos, self.joint_3_pos,
-				self.joint_4_pos, self.joint_5_pos, self.joint_6_pos,
+				self.joint_4_pos, self.joint_5_pos, self.joint_6_pos
+			], dtype=np.float32)
+
+			# Goal raggiunto: posizione attuale end-effector (qui uso robot_x,y,z, adatta se serve)
+			achieved_goal = np.array([
+				self.robot_x, self.robot_y, self.robot_z
+			], dtype=np.float32)
+
+			# Goal desiderato: posizione target della sfera
+			desired_goal = np.array([
 				self.pos_sphere_x, self.pos_sphere_y, self.pos_sphere_z
-			]
+			], dtype=np.float32)
+
+			return {
+				'observation': observation,
+				'achieved_goal': achieved_goal,
+					'desired_goal': desired_goal
+			}
+
+			#rendo tutto un vettore perche lavora cosi il train di gabri
+			#state = [
+			#		self.robot_x, self.robot_y, self.robot_z, 
+			#		self.joint_1_pos, self.joint_2_pos, self.joint_3_pos, self.joint_4_pos, self.joint_5_pos, self.joint_6_pos, 
+			#		self.pos_sphere_x, self.pos_sphere_y, self.pos_sphere_z
+			#		]	
+
+			#return state		
+		
+			
 		except:
 			self.get_logger().info('-------node not ready yet, Still getting values------------------')
 			return None

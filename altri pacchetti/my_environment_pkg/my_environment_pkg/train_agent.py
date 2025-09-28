@@ -1,0 +1,112 @@
+#1°terminale ros2 launch my_environment_pkg my_environment.launch.py
+#2°terminale ros2 run my_environment_pkg run_environment_2
+
+import sys
+import os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+import gymnasium as gym
+import gymnasium_robotics
+import numpy as np
+import torch
+from my_environment_pkg.models.sac_agent import SAC
+from my_environment_pkg.utils.model_saver import save_agent, save_replay_buffer
+from my_environment_pkg.buffers.her_replay_buffer import HERReplayBuffer
+from my_environment_pkg.GymEnv import MyGymEnv
+
+
+from gymnasium.envs.registration import register
+
+# Registrazione dell'ambiente personalizzato in Gymnasium
+register(
+    id='MyGymEnv',  # Identificativo del tuo ambiente
+    entry_point='my_environment_pkg.GymEnv:MyGymEnv',  # Indica la classe nel modulo
+    max_episode_steps=3,  # Imposta il numero massimo di passi per episodio, se necessario
+)
+
+
+
+
+def main():
+    # Set up environment
+    env = gym.make('MyGymEnv')
+    obs = env.reset()[0]
+    # Lo stato è l'intera osservazione da 12 elementi
+    state_dim = obs['observation'].shape[0] + obs['desired_goal'].shape[0]
+    action_dim = env.action_space.shape[0]
+
+    print(f"state_dim: {state_dim}, action_dim: {action_dim}")
+
+    # Device setup
+    # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = "cpu"
+
+    # Initialize SAC agent
+    sac = SAC(state_dim, action_dim, device=device)
+    save_dir = "checkpoints/"
+    os.makedirs(save_dir, exist_ok=True)
+
+    # Set hyperparameters
+    max_episodes = 1000 # max number of episodes to stop training
+    episode_length = env._max_episode_steps # 3
+    batch_size = 256
+    num_random_episodes = batch_size
+    save = True
+
+    for episode in range(max_episodes):
+        obs, _ = env.reset()
+        episode_reward = 0
+        trajectory = []
+
+        for t in range(episode_length):
+            # Create the state input by concatenating observation and desired goal
+            state = np.concatenate([obs['observation'], obs['desired_goal']])
+            
+            # Select action (va da -1 a 1)
+            action = sac.select_action(state)
+
+            #scaled_action = joint_mins + (action + 1.0) * (joint_maxs - joint_mins) / 2.0
+            joint_maxs = np.array([ 1.57,  0.78,  2.0,  1.0,  1.57,  3.14], dtype=np.float32)
+
+            scaled_action = action*joint_maxs
+           
+
+            # Step in the environment
+            next_obs, reward, terminated, truncated, _ = env.step(action)
+            done = terminated or truncated
+
+            # Append transition to trajectory
+            trajectory.append((obs, action, reward, next_obs, done))
+            
+            obs = next_obs
+            episode_reward += reward
+            #print(t, 'è il numero dello step')
+
+            if done:
+                break
+
+        # Store trajectory in the HER replay buffer
+        sac.replay_buffer.store_trajectory(trajectory)
+
+        # Train the SAC agent
+        if len(sac.replay_buffer) > num_random_episodes:
+            for _ in range(episode_length):
+                sac.update(batch_size)
+
+        # Define success (if last position is within 0.05 of the goal)
+        success = np.linalg.norm(obs['achieved_goal'] - obs['desired_goal']) < 0.05
+
+        print(f"Episode {episode}, Reward: {episode_reward}, Succcess: {success}")
+        
+        # save model in every 1000 episodes
+        if save and (episode + 1) % 100 == 0:
+            agent_path = os.path.join(save_dir, f"sac_her_fetchreach_{episode + 1}.pth")
+            replay_buffer_path = os.path.join(save_dir, f"replay_buffer_{episode + 1}.pkl")
+            save_agent(sac, agent_path)
+            save_replay_buffer(sac.replay_buffer, replay_buffer_path) # in case want to train further later
+            print("Model and replay buffer saved at episode:", episode + 1)
+        
+    print("Training completed.")
+
+if __name__ == "__main__":
+    main()

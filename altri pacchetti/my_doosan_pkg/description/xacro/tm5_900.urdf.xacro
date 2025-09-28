@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tm5_900" >
+
+
+  <xacro:include filename="$(find my_doosan_pkg)/description/xacro/macro.tm5_900.xacro"/>
+
+  <xacro:tm5_900 prefix="" joint_limited="false" stl_mesh="false"/>
+
+
+  <!-- World fixed joint-->
+  <link name="world" />
+  <joint name="world_fixed" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="world"/>
+    <child link="base"/>
+  </joint>
+
+</robot>

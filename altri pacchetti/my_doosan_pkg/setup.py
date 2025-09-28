@@ -16,12 +16,19 @@ setup(
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*.launch.py'))),
         (os.path.join('share', package_name, 'rviz'), glob(os.path.join('rviz', '*.rviz'))),    
         (os.path.join('share', package_name, 'config'), glob(os.path.join('config', '*.*'))),
-        (os.path.join('share', package_name, 'worlds'), glob(os.path.join('worlds', '*.world'))),           
-        (os.path.join('share', package_name, 'description', 'urdf'), glob(os.path.join('description','urdf', '*.urdf'))),
-        (os.path.join('share', package_name, 'description', 'xacro'), glob(os.path.join('description','xacro', '*.xacro'))),
-        (os.path.join('share', package_name, 'description', 'meshes', 'a0912_blue'), glob(os.path.join('description','meshes','a0912_blue', '*.dae'))),
-        (os.path.join('share', package_name, 'description', 'meshes', 'm1013_white'), glob(os.path.join('description','meshes','m1013_white', '*.dae'))),
-    ],
+        (os.path.join('share', package_name, 'worlds'), glob(os.path.join('worlds', '*.world'))),  
+
+        (os.path.join('share', package_name, 'description', 'xacro'), glob(os.path.join('description', 'xacro', '*.xacro'))), 
+        (os.path.join('share', package_name, 'description', 'urdf'), glob(os.path.join('description', 'urdf', '*.urdf'))),  #provvisoria per importare tmp2.urdf
+
+        (os.path.join('share', package_name, 'description', 'meshes', 'tm5_900','collision'), glob(os.path.join('description', 'meshes', 'tm5_900','collision','*.stl'))), 
+        (os.path.join('share', package_name, 'description', 'meshes', 'tm5_900','visual'), glob(os.path.join('description', 'meshes', 'tm5_900','visual','*.stl'))), 
+        (os.path.join('share', package_name, 'description', 'meshes', 'tm5_900','visual'), glob(os.path.join('description', 'meshes', 'tm5_900','visual','*.obj'))), 
+        (os.path.join('share', package_name, 'description', 'meshes', 'tm5_900','visual'), glob(os.path.join('description', 'meshes', 'tm5_900','visual','*.mtl'))), 
+
+
+        
+        ],
     install_requires=['setuptools'],
     zip_safe=True,
     maintainer='david',

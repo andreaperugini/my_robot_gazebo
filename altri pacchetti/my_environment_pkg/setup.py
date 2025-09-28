@@ -7,7 +7,11 @@ package_name = 'my_environment_pkg'
 setup(
     name=package_name,
     version='0.0.0',
-    packages=[package_name],
+    packages=[package_name,
+                package_name + '.models',
+                package_name + '.buffers',
+                package_name + '.checkpoints',
+                package_name + '.utils'],
     data_files=[
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
@@ -15,7 +19,8 @@ setup(
 
         (os.path.join('share', package_name, 'launch'),  glob(os.path.join('launch', '*.launch.py'))),
         (os.path.join('share', package_name, 'rviz'),    glob(os.path.join('rviz', '*.rviz'))),    
-        (os.path.join('share', package_name, 'worlds'),  glob(os.path.join('worlds', '*.world'))),    
+        (os.path.join('share', package_name, 'worlds'),  glob(os.path.join('worlds', '*.world'))),  
+          
 
 
 
@@ -28,11 +33,14 @@ setup(
     license='TODO: License declaration',
     tests_require=['pytest'],
     entry_points={
-        'console_scripts': [
-        
+        'console_scripts': [                           
+                           'test = my_environment_pkg.test:main',
+                           'run_environment2 = my_environment_pkg.run_environment2:main',
                            'run_environment = my_environment_pkg.run_environment:main',
                            'environment = my_environment_pkg.environment:main',
                            'data_collection = my_environment_pkg.collection_data:main',
+                            'train_agent = my_environment_pkg.train_agent:main',
+
         ],
     },  
 )
