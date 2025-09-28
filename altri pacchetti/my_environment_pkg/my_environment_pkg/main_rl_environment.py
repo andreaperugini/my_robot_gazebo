@@ -226,8 +226,12 @@ class MyRLEnvironmentNode(Node):
 		# -------------------- reset sphere position------------------#
 
 		# For now the sphere's position will be inside a 1x1x1 workspace in front of the robot 
-		sphere_position_x = random.uniform( 0.05, 1.05)
-		sphere_position_y = random.uniform( -0.5, 0.5)
+		#sphere_position_x = random.uniform( 0.05, 1.05)
+		#sphere_position_y = random.uniform( -0.5, 0.5)
+		#sphere_position_z = random.uniform( 0.05, 1.05)
+
+		sphere_position_x = random.uniform( -1, 1)
+		sphere_position_y = random.uniform( -1, 1)
 		sphere_position_z = random.uniform( 0.05, 1.05)
 
 		self.request_sphere_reset.state.name = 'my_sphere'
@@ -353,7 +357,27 @@ class MyRLEnvironmentNode(Node):
 		return [angle_j_1, angle_j_2, angle_j_3, angle_j_4, angle_j_5, angle_j_6]
 
 
-	
+	def calculate_reward_funct_sparse(self):
+		try:
+			ee_pos = np.array((self.robot_x, self.robot_y, self.robot_z), dtype=np.float32)
+			target_pos = np.array((self.pos_sphere_x, self.pos_sphere_y, self.pos_sphere_z), dtype=np.float32)
+		except Exception as e:
+			self.get_logger().info(f'[EXCEPTION] Could not calculate reward: {str(e)}')
+			return -1.0, False
+		
+		threshold = 0.05
+
+		done =False
+		dist = np.linalg.norm(ee_pos - target_pos)
+		if dist< threshold:
+			done =True
+			return 0.0, done
+		else:
+			return -1.0,done
+
+
+
+
 	def calculate_reward_funct(self):
 		try:
 			ee_pos = np.array((self.robot_x, self.robot_y, self.robot_z), dtype=np.float32)
@@ -361,6 +385,8 @@ class MyRLEnvironmentNode(Node):
 		except Exception as e:
 			self.get_logger().info(f'[EXCEPTION] Could not calculate reward: {str(e)}')
 			return -1.0, False
+
+
 
 		# --- Distanza e velocità ---
 		distance = np.linalg.norm(ee_pos - target_pos)  # [m]

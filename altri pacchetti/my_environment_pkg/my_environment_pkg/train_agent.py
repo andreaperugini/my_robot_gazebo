@@ -47,7 +47,7 @@ def main():
     os.makedirs(save_dir, exist_ok=True)
 
     # Set hyperparameters
-    max_episodes = 1000 # max number of episodes to stop training
+    max_episodes = 2000 # max number of episodes to stop training
     episode_length = env._max_episode_steps # 3
     batch_size = 256
     num_random_episodes = batch_size
@@ -66,13 +66,13 @@ def main():
             action = sac.select_action(state)
 
             #scaled_action = joint_mins + (action + 1.0) * (joint_maxs - joint_mins) / 2.0
-            joint_maxs = np.array([ 1.57,  0.78,  2.0,  1.0,  1.57,  3.14], dtype=np.float32)
+            joint_maxs = np.array([ 3.14,  3.14,  3.14,  3.14,  3.14,  3.14], dtype=np.float32)
 
             scaled_action = action*joint_maxs
            
 
             # Step in the environment
-            next_obs, reward, terminated, truncated, _ = env.step(action)
+            next_obs, reward, terminated, truncated, _ = env.step(scaled_action)
             done = terminated or truncated
 
             # Append transition to trajectory

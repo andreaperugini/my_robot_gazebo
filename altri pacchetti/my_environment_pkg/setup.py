@@ -40,6 +40,7 @@ setup(
                            'environment = my_environment_pkg.environment:main',
                            'data_collection = my_environment_pkg.collection_data:main',
                             'train_agent = my_environment_pkg.train_agent:main',
+                            'test_agent = my_environment_pkg.test_agent:main'
 
         ],
     },  
