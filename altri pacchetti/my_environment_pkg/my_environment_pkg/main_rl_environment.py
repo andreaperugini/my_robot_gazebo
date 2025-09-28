@@ -57,6 +57,7 @@ from tf2_ros import TransformException
 from rclpy.action        import ActionClient
 from trajectory_msgs.msg import JointTrajectoryPoint
 from control_msgs.action import FollowJointTrajectory
+from gazebo_msgs.msg import ContactsState
 
 from rclpy.duration import Duration
 
@@ -128,7 +129,18 @@ class MyRLEnvironmentNode(Node):
 		self.joint_state_msg = None
 		self.model_state_msg = None
 
+
 		
+		# Subcriber topic with contact sensors
+		self.contact_sensor_subscription1 = self.create_subscription(ContactsState, '/contact_sensor/bumper_shoulder_1_link', self.contact_state_callback, 1)
+		self.contact_sensor_subscription1 = self.create_subscription(ContactsState, '/contact_sensor/bumper_arm_1_link', self.contact_state_callback, 1)
+		self.contact_sensor_subscription1 = self.create_subscription(ContactsState, '/contact_sensor/bumper_arm_2_link', self.contact_state_callback, 1)
+		self.contact_sensor_subscription1 = self.create_subscription(ContactsState, '/contact_sensor/bumper_wrist_1_link', self.contact_state_callback, 1)
+		self.contact_sensor_subscription1 = self.create_subscription(ContactsState, '/contact_sensor/bumper_wrist_2_link', self.contact_state_callback, 1)
+		self.contact_sensor_subscription1 = self.create_subscription(ContactsState, '/contact_sensor/bumper_wrist_3_link', self.contact_state_callback, 1)
+
+		self.collision_flag = False
+
 	
 
 	def joint_state_callback(self, msg):
@@ -184,7 +196,17 @@ class MyRLEnvironmentNode(Node):
 		self.robot_x, self.robot_y, self.robot_z = self.get_end_effector_transformation()
 		#print('determina la posa')
 
+	def contact_state_callback(self, msg):
+		# We aim with this function to know if the end-effecto touch the ground, contact sensor
 
+		# if self.collision_values is empty [], means there is not collisions
+		self.collision_values = msg.states
+
+		if not self.collision_values:
+			#self.collision_flag = False
+			pass
+		else:
+			self.collision_flag = True
 
 	def get_end_effector_transformation(self):
 
@@ -366,14 +388,26 @@ class MyRLEnvironmentNode(Node):
 			return -1.0, False
 		
 		threshold = 0.05
+		reward = 0
+		terminated = False
+		truncated = False
 
-		done =False
+		if self.collision_flag == True:
+			self.collision_flag = False
+			self.get_logger().info('Collisione')
+			reward += -5
+			truncated = True
+			
+
+
+		
 		dist = np.linalg.norm(ee_pos - target_pos)
 		if dist< threshold:
-			done =True
-			return 0.0, done
+			terminated =True
+			return reward, terminated, truncated
 		else:
-			return -1.0,done
+			reward += -1
+			return reward,terminated, truncated
 
 
 

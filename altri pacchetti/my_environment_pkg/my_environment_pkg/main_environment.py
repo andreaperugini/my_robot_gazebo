@@ -98,6 +98,8 @@ class MyEnvironmentNode(Node):
 		# Subcriber topic with the contact sensor
 		self.contact_sensor_subscription = self.create_subscription(ContactsState, '/contact_sensor/bumper_link6', self.contact_state_callback, 1)
 
+
+		
 		self.collision_flag = False
 	
 	def on_timer_transformation(self):

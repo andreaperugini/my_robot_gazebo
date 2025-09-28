@@ -391,8 +391,8 @@
 
     <xacro:dsr_transmission prefix="" hw_interface="hardware_interface/PositionJointInterface" />
     <xacro:dsr_config_coeff />
-    <!--     <xacro:bumper_ctr_sensor /> -->
-  </xacro:macro>
+    <xacro:multi_contact_sensors/>
+    </xacro:macro>
 
 
 </robot>

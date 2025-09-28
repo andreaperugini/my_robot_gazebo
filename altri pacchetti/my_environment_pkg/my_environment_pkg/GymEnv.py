@@ -32,12 +32,13 @@ class MyGymEnv(gym.Env):
     def step(self, action):
         self.node.action_step_service(action)
         rclpy.spin_once(self.node, timeout_sec=2.5)
-
+        
         obs = self.node.state_space_funct()
-        reward, done = self.node.calculate_reward_funct_sparse()
+        reward, done, truncated = self.node.calculate_reward_funct_sparse()
+        
         info = {}
         
-        return obs, reward, done, False, info
+        return obs, reward, done, truncated, info
 
     def render(self, mode="human"):
         pass  # opzionale
