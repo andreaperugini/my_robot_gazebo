@@ -6,9 +6,11 @@ import gymnasium as gym
 import gymnasium_robotics
 import numpy as np
 import torch
+from my_environment_pkg.models.sac_agent import SAC
+from my_environment_pkg.utils.model_saver import save_agent, save_replay_buffer, load_agent
+from my_environment_pkg.buffers.her_replay_buffer import HERReplayBuffer
+from my_environment_pkg.GymEnv import MyGymEnv
 
-from models.sac_agent import SAC
-from utils.model_saver import load_agent
 
 from gymnasium.envs.registration import register
 
@@ -16,7 +18,7 @@ from gymnasium.envs.registration import register
 register(
     id='MyGymEnv',  # Identificativo del tuo ambiente
     entry_point='my_environment_pkg.GymEnv:MyGymEnv',  # Indica la classe nel modulo
-    max_episode_steps=3,  # Imposta il numero massimo di passi per episodio, se necessario
+    max_episode_steps=100,  # Imposta il numero massimo di passi per episodio, se necessario
 )
 
 
@@ -35,7 +37,7 @@ def main():
     device = "cpu"
     
     #modello da testare
-    model_path = "checkpoints/sac_her_fetchreach_1000.pth"
+    model_path = "checkpoints/sac_her_fetchreach_800.pth"
 
     # Initialize the SAC agent
     sac = SAC(state_dim, action_dim, device=device)
@@ -46,11 +48,12 @@ def main():
 
     # Testing parameters
     num_episodes = 1000
-    episode_length = 3
+    episode_length = 100
 
     for episode in range(num_episodes):
         obs, _ = env.reset()
         episode_reward = 0
+        distanza_migliore = 10000 #valore alto a caso
 
         for t in range(episode_length):
             # Prepare state
@@ -58,19 +61,27 @@ def main():
 
             # Select action (da -1 a 1)
             action = sac.select_action(state)
-
+            action *= 0.1
             # Step in the environment
-            next_obs, reward, terminated, truncated, _ = env.step(action)
+            next_obs, reward, terminated, truncated, distanza = env.step(action)
             done = terminated or truncated
 
             # Update state and reward
             obs = next_obs
             episode_reward += reward
 
+            #distanza migliore dell'episodio
+            distanza = obs['distanza']
+            #distanza=10
+
+            if distanza <= distanza_migliore:
+                distanza_migliore = distanza
+
+            
             if done:
                 break
 
-        print(f"Episode {episode}, Reward: {episode_reward}")
+        print(f"Episode {episode}, Reward: {episode_reward}, distanza: {distanza}, Gaol: {terminated}")
 
 if __name__ == "__main__":
     main()

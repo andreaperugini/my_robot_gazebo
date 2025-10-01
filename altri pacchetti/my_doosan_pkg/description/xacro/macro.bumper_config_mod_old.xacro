@@ -1,11 +1,12 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://www.ros.org/wiki/xacro">
-	<!-- Macro per sensori di contatto multipli -->
-	<xacro:macro name="multi_contact_sensors">
-		<!-- Sensore su shoulder_1_link -->
+	<xacro:macro name="bumper_ctr_sensor">
+		<!-- I need this for contact sensor, "bumper sensor"  -->
+		<!-- I create this file in order to detect self-collisions and collisions with the ground  -->
+		<!-- This helps me to detect if the end effect touch the ground so I can reset the environment -->
+		
 		<gazebo reference="shoulder_1_link">
-			<selfCollide>true</selfCollide>
-
+			<!-- contact sensor -->
 			<sensor name="shoulder_1_link_sensor" type="contact">
 				<selfCollide>true</selfCollide>
 				<alwaysOn>true</alwaysOn>
@@ -13,7 +14,8 @@
 				<contact>
 					<collision>shoulder_1_collision</collision>
 				</contact>
-				<plugin name="bumper_shoulder_1" filename="libgazebo_ros_bumper.so">
+				<!-- gazebo plugin -->
+				<plugin name="gazebo_ros_bumper_sensor" filename="libgazebo_ros_bumper.so">
 					<ros>
 						<namespace>contact_sensor</namespace>
 						<remapping>bumper_states:=bumper_shoulder_1_link</remapping>
@@ -22,11 +24,8 @@
 				</plugin>
 			</sensor>
 		</gazebo>
-
-		<!-- Sensore su arm_1_link -->
 		<gazebo reference="arm_1_link">
-			<selfCollide>true</selfCollide>
-
+			<!-- contact sensor -->
 			<sensor name="arm_1_link_sensor" type="contact">
 				<selfCollide>true</selfCollide>
 				<alwaysOn>true</alwaysOn>
@@ -34,7 +33,8 @@
 				<contact>
 					<collision>arm_1_link_collision</collision>
 				</contact>
-				<plugin name="bumper_arm_1" filename="libgazebo_ros_bumper.so">
+				<!-- gazebo plugin -->
+				<plugin name="gazebo_ros_bumper_sensor" filename="libgazebo_ros_bumper.so">
 					<ros>
 						<namespace>contact_sensor</namespace>
 						<remapping>bumper_states:=bumper_arm_1_link</remapping>
@@ -43,11 +43,8 @@
 				</plugin>
 			</sensor>
 		</gazebo>
-
-
 		<gazebo reference="arm_2_link">
-			<selfCollide>true</selfCollide>
-
+			<!-- contact sensor -->
 			<sensor name="arm_2_link_sensor" type="contact">
 				<selfCollide>true</selfCollide>
 				<alwaysOn>true</alwaysOn>
@@ -55,7 +52,8 @@
 				<contact>
 					<collision>arm_2_link_collision</collision>
 				</contact>
-				<plugin name="bumper_arm_2" filename="libgazebo_ros_bumper.so">
+				<!-- gazebo plugin -->
+				<plugin name="gazebo_ros_bumper_sensor" filename="libgazebo_ros_bumper.so">
 					<ros>
 						<namespace>contact_sensor</namespace>
 						<remapping>bumper_states:=bumper_arm_2_link</remapping>
@@ -64,10 +62,8 @@
 				</plugin>
 			</sensor>
 		</gazebo>
-
 		<gazebo reference="wrist_1_link">
-			<selfCollide>true</selfCollide>
-
+			<!-- contact sensor -->
 			<sensor name="wrist_1_link_sensor" type="contact">
 				<selfCollide>true</selfCollide>
 				<alwaysOn>true</alwaysOn>
@@ -75,7 +71,8 @@
 				<contact>
 					<collision>wrist_1_link_collision</collision>
 				</contact>
-				<plugin name="bumper_wrist_1" filename="libgazebo_ros_bumper.so">
+				<!-- gazebo plugin -->
+				<plugin name="gazebo_ros_bumper_sensor" filename="libgazebo_ros_bumper.so">
 					<ros>
 						<namespace>contact_sensor</namespace>
 						<remapping>bumper_states:=bumper_wrist_1_link</remapping>
@@ -84,10 +81,8 @@
 				</plugin>
 			</sensor>
 		</gazebo>
-
 		<gazebo reference="wrist_2_link">
-			<selfCollide>true</selfCollide>
-
+			<!-- contact sensor -->
 			<sensor name="wrist_2_link_sensor" type="contact">
 				<selfCollide>true</selfCollide>
 				<alwaysOn>true</alwaysOn>
@@ -95,7 +90,8 @@
 				<contact>
 					<collision>wrist_2_link_collision</collision>
 				</contact>
-				<plugin name="bumper_wrist_2" filename="libgazebo_ros_bumper.so">
+				<!-- gazebo plugin -->
+				<plugin name="gazebo_ros_bumper_sensor" filename="libgazebo_ros_bumper.so">
 					<ros>
 						<namespace>contact_sensor</namespace>
 						<remapping>bumper_states:=bumper_wrist_2_link</remapping>
@@ -103,11 +99,9 @@
 					<frame_name>wrist_2_link</frame_name>
 				</plugin>
 			</sensor>
-		</gazebo>
-
+		</gazebo>	
 		<gazebo reference="wrist_3_link">
-			<selfCollide>true</selfCollide>
-
+			<!-- contact sensor -->
 			<sensor name="wrist_3_link_sensor" type="contact">
 				<selfCollide>true</selfCollide>
 				<alwaysOn>true</alwaysOn>
@@ -115,7 +109,8 @@
 				<contact>
 					<collision>wrist_3_link_collision</collision>
 				</contact>
-				<plugin name="bumper_wrist_3" filename="libgazebo_ros_bumper.so">
+				<!-- gazebo plugin -->
+				<plugin name="gazebo_ros_bumper_sensor" filename="libgazebo_ros_bumper.so">
 					<ros>
 						<namespace>contact_sensor</namespace>
 						<remapping>bumper_states:=bumper_wrist_3_link</remapping>
@@ -126,5 +121,4 @@
 		</gazebo>
 
 	</xacro:macro>
-
 </robot>

@@ -61,7 +61,7 @@ from gazebo_msgs.msg import ContactsState
 
 from rclpy.duration import Duration
 
-
+import math
 
 
 class MyRLEnvironmentNode(Node):
@@ -81,7 +81,8 @@ class MyRLEnvironmentNode(Node):
 		# --------------------------Client for reset the sphere position --------------------------#
 		self.client_reset_sphere = self.create_client(SetEntityState,'/gazebo/set_entity_state')
 		while not self.client_reset_sphere.wait_for_service(timeout_sec=1.0):
-			self.get_logger().info('sphere reset-service not available, waiting...')
+			# self.get_logger().info('sphere reset-service not available, waiting...')
+			pass
 		self.request_sphere_reset = SetEntityState.Request()
 
 
@@ -133,11 +134,11 @@ class MyRLEnvironmentNode(Node):
 		
 		# Subcriber topic with contact sensors
 		self.contact_sensor_subscription1 = self.create_subscription(ContactsState, '/contact_sensor/bumper_shoulder_1_link', self.contact_state_callback, 1)
-		self.contact_sensor_subscription1 = self.create_subscription(ContactsState, '/contact_sensor/bumper_arm_1_link', self.contact_state_callback, 1)
-		self.contact_sensor_subscription1 = self.create_subscription(ContactsState, '/contact_sensor/bumper_arm_2_link', self.contact_state_callback, 1)
-		self.contact_sensor_subscription1 = self.create_subscription(ContactsState, '/contact_sensor/bumper_wrist_1_link', self.contact_state_callback, 1)
-		self.contact_sensor_subscription1 = self.create_subscription(ContactsState, '/contact_sensor/bumper_wrist_2_link', self.contact_state_callback, 1)
-		self.contact_sensor_subscription1 = self.create_subscription(ContactsState, '/contact_sensor/bumper_wrist_3_link', self.contact_state_callback, 1)
+		self.contact_sensor_subscription2 = self.create_subscription(ContactsState, '/contact_sensor/bumper_arm_1_link', self.contact_state_callback, 1)
+		self.contact_sensor_subscription3 = self.create_subscription(ContactsState, '/contact_sensor/bumper_arm_2_link', self.contact_state_callback, 1)
+		self.contact_sensor_subscription4 = self.create_subscription(ContactsState, '/contact_sensor/bumper_wrist_1_link', self.contact_state_callback, 1)
+		self.contact_sensor_subscription5 = self.create_subscription(ContactsState, '/contact_sensor/bumper_wrist_2_link', self.contact_state_callback, 1)
+		self.contact_sensor_subscription6 = self.create_subscription(ContactsState, '/contact_sensor/bumper_wrist_3_link', self.contact_state_callback, 1)
 
 		self.collision_flag = False
 
@@ -168,17 +169,17 @@ class MyRLEnvironmentNode(Node):
 		# Seems that the order that the joint values arrive is: ['joint2', 'joint3', 'joint1', 'joint4', 'joint5', 'joint6'] #TODO DA CAMBIARE NEL NOSTRO ROBOT, L'ORDINE NON SO QUALE SIA
 		#print("callback chiamata")
 		# Position of each joint:
-		self.joint_1_pos = joint_state_msg.position[2]
-		self.joint_2_pos = joint_state_msg.position[0]
-		self.joint_3_pos = joint_state_msg.position[1]
+		self.joint_1_pos = joint_state_msg.position[0]
+		self.joint_2_pos = joint_state_msg.position[1]
+		self.joint_3_pos = joint_state_msg.position[2]
 		self.joint_4_pos = joint_state_msg.position[3]
 		self.joint_5_pos = joint_state_msg.position[4]
 		self.joint_6_pos = joint_state_msg.position[5]
 
 		# Velocity of each joint:
-		self.joint_1_vel =  joint_state_msg.velocity[2]
-		self.joint_2_vel =  joint_state_msg.velocity[0]
-		self.joint_3_vel =  joint_state_msg.velocity[1]
+		self.joint_1_vel =  joint_state_msg.velocity[0]
+		self.joint_2_vel =  joint_state_msg.velocity[1]
+		self.joint_3_vel =  joint_state_msg.velocity[2]
 		self.joint_4_vel =  joint_state_msg.velocity[3]
 		self.joint_5_vel =  joint_state_msg.velocity[4]
 		self.joint_6_vel =  joint_state_msg.velocity[5]
@@ -252,10 +253,25 @@ class MyRLEnvironmentNode(Node):
 		#sphere_position_y = random.uniform( -0.5, 0.5)
 		#sphere_position_z = random.uniform( 0.05, 1.05)
 
-		sphere_position_x = random.uniform( -1, 1)
-		sphere_position_y = random.uniform( -1, 1)
+		#elissoide
+		beta = random.uniform(-1.57,1.57)
+		lamb = random.uniform(-3.14,3.14)
+
+		#altezza = 1.092
+		#sphere_position_x = random.uniform( -1, 1)
+		#sphere_position_y = random.uniform( -1, 1)
+		#sphere_position_z = random.uniform( 0.05, 1.05)
+
+		#sphere_position_x = 0.5 * math.cos(beta)*math.cos(lamb)
+		#sphere_position_y = 0.5 * math.cos(beta)*math.sin(lamb)
+		#sphere_position_z = 0.3 * math.sin(beta) + 0.6 
+
+		sphere_position_x = random.uniform( 0.05, 1.05)
+		sphere_position_y = random.uniform( 0, 0.5)
 		sphere_position_z = random.uniform( 0.05, 1.05)
 
+		#sphere_position_y = random.uniform( -1, 1)
+		#sphere_position_z = random.uniform( 0.05, 1.05)
 		self.request_sphere_reset.state.name = 'my_sphere'
 		self.request_sphere_reset.state.reference_frame = 'world'
 		self.request_sphere_reset.state.pose.position.x = sphere_position_x
@@ -264,14 +280,15 @@ class MyRLEnvironmentNode(Node):
 		
 		self.future_sphere_reset = self.client_reset_sphere.call_async(self.request_sphere_reset)
 
-		self.get_logger().info('Reseting sphere to new position...')
+		#self.get_logger().info('Reseting sphere to new position...')
 
 		rclpy.spin_until_future_complete(self, self.future_sphere_reset)
 
 		sphere_service_response = self.future_sphere_reset.result()
 		
 		if sphere_service_response.success:
-			self.get_logger().info("Sphere Moved to a New Possiton Success")
+			# self.get_logger().info("Sphere Moved to a New Possiton Success")
+			pass
 		else:
 			self.get_logger().info("Sphere Reset Request failed")
 
@@ -282,11 +299,11 @@ class MyRLEnvironmentNode(Node):
 		home_point_msg.positions     = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 		home_point_msg.velocities    = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 		home_point_msg.accelerations = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-		home_point_msg.time_from_start = Duration(seconds=1).to_msg() #prima era 2, provo ad accorciare i tempi
+		home_point_msg.time_from_start = Duration(seconds=0.5).to_msg() #prima era 2, provo ad accorciare i tempi
 
 		joint_names   = ['shoulder_1_joint', 'shoulder_2_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 		home_goal_msg = FollowJointTrajectory.Goal()
-		home_goal_msg.goal_time_tolerance    = Duration(seconds=1).to_msg()
+		home_goal_msg.goal_time_tolerance    = Duration(seconds=0.5).to_msg()
 		home_goal_msg.trajectory.joint_names = joint_names
 		home_goal_msg.trajectory.points      = [home_point_msg]
 		
@@ -300,65 +317,105 @@ class MyRLEnvironmentNode(Node):
 		if not goal_reset_handle.accepted:
 			self.get_logger().info(' Home-Goal rejected ')
 			return
-		self.get_logger().info('Moving robot to home position...')
+		# self.get_logger().info('Moving robot to home position...')
 
 		get_reset_result = goal_reset_handle.get_result_async()
 		rclpy.spin_until_future_complete(self, get_reset_result)  # Wait for response
 
 		if get_reset_result.result().result.error_code == 0:
-			self.get_logger().info('Robot in Home position without problems')
+			#self.get_logger().info('Robot in Home position without problems')
+			pass
 		else:
 			self.get_logger().info('There was a problem with the action')
 
+		self.collision_flag = False
 
-	def action_step_service(self, action_values):
+
+	def action_step_service(self, action_values_delta, obs):
 		
+		#in input i delta degli angoli
+
 		# Every time this function is called, it passes the action vector (desire position of each joint) 
 		# to the action-client to execute the trajectory
-		print(action_values)
-		action_values = action_values.tolist() #prima è numpy.array, cosi diventa vettore di float
-		print(type(action_values))
+		#print(action_values)
+		action_values_delta = action_values_delta.tolist() #prima è numpy.array, cosi diventa vettore di float
+		#print(type(action_values))
 		points = []
 
+		#ottieni angoli attuali e aggiungi i delta degli angoli
+		#print("obs ", obs['observation'])
+		angoli = obs['observation'][3:9]
+		angoli.tolist()
+		#print(angoli)
+
+		#print('angoli pre ', angoli)
+		#print('angoli post ',action_values)
+
+
+		#action_values_nuovi = [action_values[0], 0.05632082745432854, -0.017664477229118347, 0.15607334673404694, 0.06925630569458008, -0.41408106684684753]
+		""" action_values_nuovi = [
+			action_values_delta[0] + angoli[0],
+			0.05632082745432854,
+			-0.017664477229118347,
+			0.15607334673404694,
+			0.06925630569458008,
+			-0.41408106684684753
+		]
+
+ 		"""
+		action_values_nuovi = [None]*6
+		for i in range(6):
+			action_values_nuovi[i] = action_values_delta[i] + angoli[i]
+		
+
+
+		
+		#print(action_values_delta[0] ,angolo, action_values_nuovi[0])
+		
+		""" print(angoli)
+		print(action_values_delta)
+		print(action_values) """
+
 		point_msg = JointTrajectoryPoint()
-		point_msg.positions     = action_values
+		point_msg.positions     = action_values_nuovi
 		point_msg.velocities    = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 		point_msg.accelerations = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
-		point_msg.time_from_start = Duration(seconds=2.0).to_msg() # be careful about this time 
+		point_msg.time_from_start = Duration(seconds=0.5).to_msg() # be careful about this time 
 		points.append(point_msg) 
 
 		#joint_names = ['joint1','joint2','joint3','joint4','joint5','joint6']
 		joint_names   = ['shoulder_1_joint', 'shoulder_2_joint', 'elbow_joint', 'wrist_1_joint', 'wrist_2_joint', 'wrist_3_joint']
 
 		goal_msg    = FollowJointTrajectory.Goal()
-		goal_msg.goal_time_tolerance = Duration(seconds=1).to_msg() # goal_time_tolerance allows some freedom in time, so that the trajectory goal can still
+		goal_msg.goal_time_tolerance = Duration(seconds=0.5).to_msg() # goal_time_tolerance allows some freedom in time, so that the trajectory goal can still
 															        # succeed even if the joints reach the goal some time after the precise end time of the trajectory.
 															
 		goal_msg.trajectory.joint_names = joint_names
 		goal_msg.trajectory.points      = points
 
-		self.get_logger().info('Waiting for action server to move the robot...')
+		#self.get_logger().info('Waiting for action server to move the robot...')
 		self.trajectory_action_client.wait_for_server() # waits for the action server to be available
 
-		self.get_logger().info('Sending goal-action request...')
+		#self.get_logger().info('Sending goal-action request...')
 		self.send_goal_future = self.trajectory_action_client.send_goal_async(goal_msg) 
 
-		self.get_logger().info('Checking if the goal is accepted...')
+		#self.get_logger().info('Checking if the goal is accepted...')
 		rclpy.spin_until_future_complete(self, self.send_goal_future ) # Wait for goal status
 
 		goal_handle = self.send_goal_future.result()
 
 		if not goal_handle.accepted:
-			self.get_logger().info(' Action-Goal rejected ')
+		#	self.get_logger().info(' Action-Goal rejected ')
 			return
-		self.get_logger().info('Action-Goal accepted')
+		#self.get_logger().info('Action-Goal accepted')
 
-		self.get_logger().info('Checking the response from action-service...')
+		#self.get_logger().info('Checking the response from action-service...')
 		self.get_result = goal_handle.get_result_async()
 		rclpy.spin_until_future_complete(self, self.get_result ) # Wait for response
 
 		if self.get_result.result().result.error_code == 0:
-			self.get_logger().info('Action Completed without problem')
+		#	self.get_logger().info('Action Completed without problem')
+			pass
 		else:
 			self.get_logger().info('There was a problem with the accion')
 
@@ -394,7 +451,7 @@ class MyRLEnvironmentNode(Node):
 
 		if self.collision_flag == True:
 			self.collision_flag = False
-			self.get_logger().info('Collisione')
+		#	self.get_logger().info('Collisione')
 			reward += -5
 			truncated = True
 			
@@ -526,10 +583,20 @@ class MyRLEnvironmentNode(Node):
 				self.pos_sphere_x, self.pos_sphere_y, self.pos_sphere_z
 			], dtype=np.float32)
 
+
+			#calcolo distanza
+
+			#print(observation)
+			ee_pos = np.array((self.robot_x, self.robot_y, self.robot_z), dtype=np.float32)
+			target_pos = np.array((self.pos_sphere_x, self.pos_sphere_y, self.pos_sphere_z), dtype=np.float32)
+
+			distance = np.linalg.norm(ee_pos - target_pos)
+
 			return {
 				'observation': observation,
 				'achieved_goal': achieved_goal,
-					'desired_goal': desired_goal
+				'desired_goal': desired_goal,
+				'distanza': distance
 			}
 
 			#rendo tutto un vettore perche lavora cosi il train di gabri
@@ -543,7 +610,7 @@ class MyRLEnvironmentNode(Node):
 		
 			
 		except:
-			self.get_logger().info('-------node not ready yet, Still getting values------------------')
+		#	self.get_logger().info('-------node not ready yet, Still getting values------------------')
 			return None
 		else:
 			return np.array(state, dtype=np.float32)

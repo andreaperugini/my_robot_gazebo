@@ -50,7 +50,7 @@ def main():
     device = "cpu"
 
     # Percorso modello
-    model_path = os.path.expanduser("/home/andrea/checkpoints/sac_agent_ep300.pth")
+    model_path = os.path.expanduser("/home/andrea/checkpoints/sac_agent_ep200.pth")
 
     # Inizializza SAC
     sac = SAC(state_dim, action_dim, device=device)

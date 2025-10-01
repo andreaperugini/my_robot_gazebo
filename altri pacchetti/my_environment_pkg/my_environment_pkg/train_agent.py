@@ -10,7 +10,7 @@ import gymnasium_robotics
 import numpy as np
 import torch
 from my_environment_pkg.models.sac_agent import SAC
-from my_environment_pkg.utils.model_saver import save_agent, save_replay_buffer
+from my_environment_pkg.utils.model_saver import save_agent, save_replay_buffer, load_agent, load_replay_buffer
 from my_environment_pkg.buffers.her_replay_buffer import HERReplayBuffer
 from my_environment_pkg.GymEnv import MyGymEnv
 
@@ -21,7 +21,7 @@ from gymnasium.envs.registration import register
 register(
     id='MyGymEnv',  # Identificativo del tuo ambiente
     entry_point='my_environment_pkg.GymEnv:MyGymEnv',  # Indica la classe nel modulo
-    max_episode_steps=3,  # Imposta il numero massimo di passi per episodio, se necessario
+    max_episode_steps=200,  # Imposta il numero massimo di passi per episodio, se necessario
 )
 
 
@@ -34,20 +34,32 @@ def main():
     # Lo stato è l'intera osservazione da 12 elementi
     state_dim = obs['observation'].shape[0] + obs['desired_goal'].shape[0]
     action_dim = env.action_space.shape[0]
+    
 
     print(f"state_dim: {state_dim}, action_dim: {action_dim}")
 
     # Device setup
     # device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    device = "cpu"
+    device = "cuda"
 
     # Initialize SAC agent
     sac = SAC(state_dim, action_dim, device=device)
+
+    
+
     save_dir = "checkpoints/"
     os.makedirs(save_dir, exist_ok=True)
 
+    #carica checkpoint vecchio
+    #model_path = "checkpoints/sac_her_fetchreach_800.pth"
+    #replay_buffer_path = "checkpoints/replay_buffer_800.pkl"
+    #sac = load_agent(sac, model_path, device)
+    #sac.replay_buffer = load_replay_buffer(sac.replay_buffer, replay_buffer_path)
+    
+
+
     # Set hyperparameters
-    max_episodes = 2000 # max number of episodes to stop training
+    max_episodes = 10000 # max number of episodes to stop training
     episode_length = env._max_episode_steps # 3
     batch_size = 256
     num_random_episodes = batch_size
@@ -64,15 +76,17 @@ def main():
             
             # Select action (va da -1 a 1)
             action = sac.select_action(state)
-
+            
             #scaled_action = joint_mins + (action + 1.0) * (joint_maxs - joint_mins) / 2.0
-            joint_maxs = np.array([ 3.14,  3.14,  3.14,  3.14,  3.14,  3.14], dtype=np.float32)
+            #joint_maxs = np.array([ 3.14,  3.14,  3.14,  3.14,  3.14,  3.14], dtype=np.float32)
 
-            scaled_action = action*joint_maxs
+            #scaled_action = action*joint_maxs
            
 
             # Step in the environment
-            next_obs, reward, terminated, truncated, _ = env.step(scaled_action)
+            action *= 0.1
+            next_obs, reward, terminated, truncated, _ = env.step(action)
+            if truncated: print('Collisione')
             done = terminated or truncated
 
             # Append transition to trajectory
